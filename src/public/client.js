@@ -2,9 +2,10 @@ let store = {
   apod: "",
   rovers: ["Curiosity", "Opportunity", "Spirit"],
   selected: "Curiosity",
-  Curiosity: [],
-  Opportunity: [],
-  Spirit: [],
+  Curiosity: {},
+  Opportunity: {},
+  Spirit: {},
+  sol: 100,
   showing: [25, 50, 100, 200],
   showingSelected: 25,
 };
@@ -30,11 +31,11 @@ const App = (state) => {
           <h1>Mars Dashboard</h1>
         </header>
         <main>
-        
           <section>
-          <h3>Rover selected ${store.selected}</h3>
-            ${MarsPhotos(store.selected)}
-               
+          ${roverInformation()}
+          ${navbar()}
+          ${galleryViewSettings()}
+          ${MarsPhotos(store.selected)}
           </section>
         </main>
         <footer></footer>
@@ -48,9 +49,88 @@ window.addEventListener("load", () => {
 
 // ------------------------------------------------------  COMPONENTS
 
+const handleClick = (r) => {
+  // console.log(r.id)
+  updateStore(store, { selected: r.id });
+};
+
+const navbar = () => {
+  const { rovers } = store;
+  let buttons = "";
+
+  rovers.forEach(
+    (r) =>
+      (buttons += `
+      <li>
+        <button id=${r} onClick=handleClick(${r}) >${r}</button>
+      </li>
+    `)
+  );
+
+  return `
+    <navbar>
+      <ul>
+        ${buttons}
+      </ul>
+    </navbar>
+  `;
+};
+
+const handleSolChange = (value) => {
+  console.log(value);
+};
+
+const handlePhotoNumberChange = (value) => {
+  console.log(value);
+};
+
+const galleryViewSettings = () => {
+  let numberOfPhotosToShow = "";
+  store.showing.forEach(
+    (number) =>
+      (numberOfPhotosToShow += `
+      <li>
+        <button id=${number} onClick="handlePhotoNumberChange(${number})" >${number}</button>
+      </li>
+    `)
+  );
+
+  return `
+    <ul>
+      ${numberOfPhotosToShow}
+    </ul>
+
+    <label for="sol">Sol (between 1 and 1000):</label>
+    <input type="number" id="sol" name="quantity" min="1" max="1000">
+    <input type="submit" onclick="handleSolChange(document.getElementById('sol').value)" >
+  `;
+};
+
+const roverInformation = () => {
+  const rover = store[store.selected];
+
+  if (rover.landingDate) {
+    const name = store.selected;
+    const landingDate = rover.landingDate;
+    const launchDate = rover.launchDate;
+    const status = rover.status;
+
+    return `
+      <h3>${name}</h3>
+      <h3>Sol: ${store.sol}</h3>
+      <h3>Landing Date: ${landingDate}</h3>
+      <h3>Launch Date: ${launchDate}</h3>
+      <h3>Status: ${status}</h3>
+    `;
+  }
+
+  return ``;
+};
+
 const MarsPhotos = (rover) => {
-  const photoArray = store[rover];
-  if (photoArray.length === 0) {
+  // console.log(store);
+  const photoArray = store[rover].photos;
+  if (!photoArray) {
     // alert("no photos, fetching")
     getMarsPhotos(store.selected);
     return ``;
@@ -63,25 +143,19 @@ const MarsPhotos = (rover) => {
 
 const displayMarsPhotos = () => {
   // const { selected, photos, showingSelected } = store;
-  const photoArray = store[store.selected];
+  const photoArray = store[store.selected].photos;
   let display = "";
 
-    // display all
-    // console.log(photoArray);
-    photoArray.slice(0, store.showingSelected).forEach((p) => {
-      display += `
+  // display all
+  // console.log(photoArray);
+  photoArray.slice(0, store.showingSelected).forEach((p) => {
+    display += `
         <div>
           <img src="${p.img_src}" height="350px" />
-          <div class="photo-info">
-            <div>
-              Earth Date: ${p.earth_date}
-              Earth Date: ${p.earth_date}
-            </div>
-          </div>
+       
         </div>
       `;
-    });
-  
+  });
 
   return display;
 };
@@ -97,11 +171,20 @@ const getMarsPhotos = (rover) => {
     },
     body: JSON.stringify({
       rover: rover,
+      sol: store.sol,
     }),
   })
     .then((res) => res.json())
-    .then((data) => updateStore(store, { [rover]: data.photos }))
-    .then(() => console.log(store))
+    .then((data) =>
+      updateStore(store, {
+        [rover]: {
+          photos: data.photos,
+          landingDate: data.photos[0].rover.landing_date,
+          launchDate: data.photos[0].rover.launch_date,
+          status: data.photos[0].rover.status,
+        },
+      })
+    )
+
+    .then(() => console.log(store));
 };
-
-
