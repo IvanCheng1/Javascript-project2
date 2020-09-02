@@ -1,7 +1,12 @@
 let store = {
-  user: { name: "Student" },
   apod: "",
   rovers: ["Curiosity", "Opportunity", "Spirit"],
+  selected: "Curiosity",
+  Curiosity: [],
+  Opportunity: [],
+  Spirit: [],
+  showing: [25, 50, 100, 200],
+  showingSelected: 25,
 };
 
 // add our markup to the page
@@ -21,22 +26,16 @@ const App = (state) => {
   let { rovers, apod } = state;
 
   return `
-        <header></header>
+        <header>
+          <h1>Mars Dashboard</h1>
+        </header>
         <main>
-            ${Greeting(store.user.name)}
-            <section>
-                <h3>Put things on the page!</h3>
-                <p>Here is an example section.</p>
-                <p>
-                    One of the most popular websites at NASA is the Astronomy Picture of the Day. In fact, this website is one of
-                    the most popular websites across all federal agencies. It has the popular appeal of a Justin Bieber video.
-                    This endpoint structures the APOD imagery and associated metadata so that it can be repurposed for other
-                    applications. In addition, if the concept_tags parameter is set to True, then keywords derived from the image
-                    explanation are returned. These keywords could be used as auto-generated hashtags for twitter or instagram feeds;
-                    but generally help with discoverability of relevant imagery.
-                </p>
-                ${ImageOfTheDay(apod)}
-            </section>
+        
+          <section>
+          <h3>Rover selected ${store.selected}</h3>
+            ${MarsPhotos(store.selected)}
+               
+          </section>
         </main>
         <footer></footer>
     `;
@@ -49,55 +48,60 @@ window.addEventListener("load", () => {
 
 // ------------------------------------------------------  COMPONENTS
 
-// Pure function that renders conditional information -- THIS IS JUST AN EXAMPLE, you can delete it.
-const Greeting = (name) => {
-  if (name) {
-    return `
-            <h1>Welcome, ${name}!</h1>
-        `;
-  }
+const MarsPhotos = (rover) => {
+  const photoArray = store[rover];
+  if (photoArray.length === 0) {
+    // alert("no photos, fetching")
+    getMarsPhotos(store.selected);
+    return ``;
+  } else {
+    // alert(`There are ${photoArray.length} number of photos`)
 
-  return `
-        <h1>Hello!</h1>
-    `;
+    return displayMarsPhotos();
+  }
 };
 
-// Example of a pure function that renders infomation requested from the backend
-const ImageOfTheDay = (apod) => {
-  // If image does not already exist, or it is not from today -- request it again
-  const today = new Date();
-  const photodate = new Date(apod.date);
-  console.log(photodate.getDate(), today.getDate());
+const displayMarsPhotos = () => {
+  // const { selected, photos, showingSelected } = store;
+  const photoArray = store[store.selected];
+  let display = "";
 
-  console.log(photodate.getDate() === today.getDate());
-  if (!apod || apod.date === today.getDate()) {
-    getImageOfTheDay(store);
-  }
+    // display all
+    // console.log(photoArray);
+    photoArray.slice(0, store.showingSelected).forEach((p) => {
+      display += `
+        <div>
+          <img src="${p.img_src}" height="350px" />
+          <div class="photo-info">
+            <div>
+              Earth Date: ${p.earth_date}
+              Earth Date: ${p.earth_date}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  
 
-  // check if the photo of the day is actually type video!
-  if (apod.media_type === "video") {
-    return `
-            <p>See today's featured video <a href="${apod.url}">here</a></p>
-            <p>${apod.title}</p>
-            <p>${apod.explanation}</p>
-        `;
-  } else {
-    return `
-            <img src="${apod.image.url}" height="350px" width="100%" />
-            <p>${apod.image.explanation}</p>
-        `;
-  }
+  return display;
 };
 
 // ------------------------------------------------------  API CALLS
 
-// Example API call
-const getImageOfTheDay = (state) => {
-  let { apod } = state;
-
-  fetch(`http://localhost:3000/apod`)
+const getMarsPhotos = (rover) => {
+  fetch(`http://localhost:3000/photos`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      rover: rover,
+    }),
+  })
     .then((res) => res.json())
-    .then((apod) => updateStore(store, { apod }));
-
-  return data;
+    .then((data) => updateStore(store, { [rover]: data.photos }))
+    .then(() => console.log(store))
 };
+
+
