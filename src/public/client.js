@@ -33,9 +33,13 @@ const App = (state) => {
         <main>
           <section>
           ${roverInformation()}
-          ${navbar()}
-          ${galleryViewSettings()}
-          ${MarsPhotos(store.selected)}
+          <div class="option-box">
+            ${navbar()}
+            ${galleryViewSettings()}
+          </div>
+          <div class="gallery">
+            ${MarsPhotos(store.selected)}
+          </div>
           </section>
         </main>
         <footer></footer>
@@ -50,7 +54,6 @@ window.addEventListener("load", () => {
 // ------------------------------------------------------  COMPONENTS
 
 const handleClick = (r) => {
-  // console.log(r.id)
   updateStore(store, { selected: r.id });
 };
 
@@ -62,13 +65,14 @@ const navbar = () => {
     (r) =>
       (buttons += `
       <li>
-        <button id=${r} onClick=handleClick(${r}) >${r}</button>
+        <button id=${r} class="btn ${store.selected === r ? 'active' : ''}" onClick=handleClick(${r}) >${r}</button>
       </li>
     `)
   );
 
   return `
     <navbar>
+      <div class="option-label" >Rover selected</div>
       <ul>
         ${buttons}
       </ul>
@@ -77,11 +81,13 @@ const navbar = () => {
 };
 
 const handleSolChange = (value) => {
-  console.log(value);
+  updateStore(store, { sol: value });
+  getMarsPhotos(store.selected);
 };
 
 const handlePhotoNumberChange = (value) => {
-  console.log(value);
+  updateStore(store, { showingSelected: value });
+  getMarsPhotos(store.selected);
 };
 
 const galleryViewSettings = () => {
@@ -90,19 +96,28 @@ const galleryViewSettings = () => {
     (number) =>
       (numberOfPhotosToShow += `
       <li>
-        <button id=${number} onClick="handlePhotoNumberChange(${number})" >${number}</button>
+        <button id=${number} class="small-btn ${store.showingSelected === number ? 'active' : ''}" onClick="handlePhotoNumberChange(${number})" >${number}</button>
       </li>
     `)
   );
 
   return `
-    <ul>
-      ${numberOfPhotosToShow}
-    </ul>
+    <div class="photo-option">
+      <div class="option-label" >Photos shown</div>
+      <ul>
+        ${numberOfPhotosToShow}
+      </ul>
+    </div>
 
-    <label for="sol">Sol (between 1 and 1000):</label>
-    <input type="number" id="sol" name="quantity" min="1" max="1000">
-    <input type="submit" onclick="handleSolChange(document.getElementById('sol').value)" >
+    <div class="sol-option">
+      <div class="option-label">Sol (between 1 and 1000):</div>
+      <div class="sol-option-buttons">
+        <input type="number" id="sol" name="quantity" min="1" max="1000" value=${store.sol} >
+        <button class="inline-small-btn" onclick="handleSolChange(document.getElementById('sol').value)" >
+          Update
+        </button>
+      </div>
+    </div>
   `;
 };
 
@@ -116,11 +131,47 @@ const roverInformation = () => {
     const status = rover.status;
 
     return `
-      <h3>${name}</h3>
-      <h3>Sol: ${store.sol}</h3>
-      <h3>Landing Date: ${landingDate}</h3>
-      <h3>Launch Date: ${launchDate}</h3>
-      <h3>Status: ${status}</h3>
+    <div class="info-box">
+      <div class="info-box-max-width">
+        <div class="rover">
+          <div class="label">
+            Rover
+          </div>
+          <div>
+            ${name}
+          </div>
+        </div>
+
+        <div class="status">
+          <div class="label">
+            Status
+          </div>
+          <div>
+            ${status}
+          </div>
+        </div>
+
+        <div class="launch">
+          <div class="label">
+            Launch Date
+          </div>
+          <div>
+            ${launchDate}
+          </div>
+        </div>
+
+        <div class="landing">
+          <div class="label">
+            Landing Date
+          </div>
+          <div>
+            ${landingDate}
+          </div>
+        </div>
+      </div>
+      
+
+    </div>
     `;
   }
 
@@ -128,31 +179,23 @@ const roverInformation = () => {
 };
 
 const MarsPhotos = (rover) => {
-  // console.log(store);
   const photoArray = store[rover].photos;
   if (!photoArray) {
-    // alert("no photos, fetching")
     getMarsPhotos(store.selected);
     return ``;
   } else {
-    // alert(`There are ${photoArray.length} number of photos`)
-
     return displayMarsPhotos();
   }
 };
 
 const displayMarsPhotos = () => {
-  // const { selected, photos, showingSelected } = store;
   const photoArray = store[store.selected].photos;
   let display = "";
 
-  // display all
-  // console.log(photoArray);
   photoArray.slice(0, store.showingSelected).forEach((p) => {
     display += `
-        <div>
+        <div class="image">
           <img src="${p.img_src}" height="350px" />
-       
         </div>
       `;
   });
