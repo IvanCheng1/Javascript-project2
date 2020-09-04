@@ -17,9 +17,17 @@ app.use("/", express.static(path.join(__dirname, "../public")));
 app.post("/photos", async (req, res) => {
   try {
     let photos = await fetch(
-      `https://api.nasa.gov/mars-photos/api/v1/rovers/${req.body.rover.toLowerCase()}/photos?sol=${req.body.sol}&api_key=${process.env.API_KEY}`
+      `https://api.nasa.gov/mars-photos/api/v1/rovers/${req.body.rover.toLowerCase()}/latest_photos?api_key=${process.env.API_KEY}`
     ).then((res) => res.json());
-    res.send(photos);
+    res.send(photos.latest_photos.map(p => {
+      return {
+        img_src: p.img_src,
+        earth_date: p.earth_date,
+        landing_date: p.rover.landing_date,
+        launch_date: p.rover.launch_date,
+        status: p.rover.status
+      }
+    }));
   } catch (err) {
     console.log("error:", err);
   }
